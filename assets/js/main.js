@@ -630,6 +630,19 @@ function openBookingModal(tourId) {
   // Tính toán lại bảng tiền
   calculateOrderPricing();
 
+  // Tự động điền thông tin tài khoản nếu đã đăng nhập
+  if (typeof getCurrentUser === "function") {
+    const loggedUser = getCurrentUser();
+    if (loggedUser) {
+      const nameInput = document.getElementById("customerName");
+      const phoneInput = document.getElementById("customerPhone");
+      const emailInput = document.getElementById("customerEmail");
+      if (nameInput) nameInput.value = loggedUser.fullName;
+      if (phoneInput) phoneInput.value = loggedUser.phone;
+      if (emailInput) emailInput.value = loggedUser.email;
+    }
+  }
+
   const modalEl = document.getElementById("bookingModal");
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
@@ -936,11 +949,14 @@ function handleBookingSubmission(e) {
   const statusText = isPaid ? "ĐÃ THANH TOÁN" : "CHỜ THANH TOÁN (24H)";
 
   // 5. Tạo đối tượng đơn hàng đầy đủ
+  const currentUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
   const newOrder = {
     bookingId: AppState.bookingReference,
     tourId: pricing.tourId,
     tourTitle: pricing.tourTitle,
     departureDate: departureDate,
+    userId: currentUser ? currentUser.id : null,
+    userEmail: currentUser ? currentUser.email : null,
     customer: {
       fullName,
       phone,
@@ -1076,7 +1092,9 @@ function renderMyBookingsList(searchFilter = "") {
     bookings = bookings.filter(b =>
       b.bookingId.toLowerCase().includes(kw) ||
       b.customer.phone.includes(kw) ||
-      b.customer.fullName.toLowerCase().includes(kw)
+      b.customer.fullName.toLowerCase().includes(kw) ||
+      (b.customer.email && b.customer.email.toLowerCase().includes(kw)) ||
+      (b.userEmail && b.userEmail.toLowerCase().includes(kw))
     );
   }
 

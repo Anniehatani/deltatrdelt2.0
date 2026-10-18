@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="assets/css/checkout.css">
   <link rel="stylesheet" href="assets/css/sections.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
+  <link rel="stylesheet" href="assets/css/auth.css">
+  <link rel="stylesheet" href="assets/css/chatbot.css">
 </head>
 <body>
 
@@ -45,6 +47,7 @@
           <span class="text-light small"><i class="bi bi-shield-check text-success"></i> Cam kết 100% bảo hiểm & giá chuẩn</span>
         </div>
         <div class="d-flex align-items-center">
+          <div id="topbarAuthContainer" class="d-none d-md-inline-flex align-items-center me-3"></div>
           <a href="javascript:void(0)" onclick="openMyBookingsModal()">
             <i class="bi bi-ticket-perforated-fill text-info"></i> Tra cứu đơn đặt chỗ
           </a>
@@ -106,6 +109,9 @@
 
           <!-- Thao tác góc phải -->
           <div class="header-actions">
+            <!-- Khu vực tài khoản người dùng -->
+            <div id="headerAuthContainer" class="d-inline-flex align-items-center"></div>
+
             <button class="btn-icon-header d-lg-none" onclick="openWishlistModal()" title="Tour yêu thích">
               <i class="bi bi-heart"></i>
               <span class="header-badge wishlist-counter">0</span>
@@ -1223,6 +1229,293 @@
     </div>
   </div>
 
+  <!-- MODAL 6: HỆ THỐNG ĐĂNG NHẬP / ĐĂNG KÝ / QUÊN MẬT KHẨU (AUTH MODAL) -->
+  <div class="modal fade modal-auth" id="authModal" tabindex="-1" aria-labelledby="authModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="auth-modal-header">
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="brand-icon">
+            <i class="bi bi-person-badge"></i>
+          </div>
+          <h4 class="modal-title" id="authModalTitle">Tài Khoản Delta Travel</h4>
+          <p class="modal-subtitle">Trải nghiệm đặt tour cao cấp & quản lý hành trình dễ dàng</p>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- 3 Tab điều hướng -->
+          <div class="auth-tabs-nav mb-4">
+            <button type="button" class="nav-link auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
+            </button>
+            <button type="button" class="nav-link auth-tab-btn" data-tab="register" onclick="switchAuthTab('register')">
+              <i class="bi bi-person-plus me-1"></i> Đăng ký
+            </button>
+            <button type="button" class="nav-link auth-tab-btn" data-tab="forgot" onclick="switchAuthTab('forgot')">
+              <i class="bi bi-key me-1"></i> Quên MK
+            </button>
+          </div>
+
+          <!-- PANE 1: FORM ĐĂNG NHẬP -->
+          <div id="authPane_login" class="auth-pane">
+            <form id="loginForm" novalidate>
+              <div class="auth-form-group">
+                <label for="loginAccount">Email hoặc Số điện thoại <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-person-fill input-icon"></i>
+                  <input type="text" class="form-control" id="loginAccount" placeholder="Nhập Email hoặc Số điện thoại..." required>
+                </div>
+                <div class="auth-error-msg" id="loginAccountError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="loginPassword">Mật khẩu <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-lock-fill input-icon"></i>
+                  <input type="password" class="form-control" id="loginPassword" placeholder="Nhập mật khẩu..." required>
+                  <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('loginPassword', this)" title="Ẩn/hiện mật khẩu">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </div>
+                <div class="auth-error-msg" id="loginPasswordError"></div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="loginRemember" checked>
+                  <label class="form-check-label small text-muted" for="loginRemember">Ghi nhớ đăng nhập</label>
+                </div>
+                <a href="javascript:void(0)" class="small text-decoration-none text-primary fw-semibold" onclick="switchAuthTab('forgot')">Quên mật khẩu?</a>
+              </div>
+
+              <div class="auth-error-msg mb-3" id="loginGeneralError"></div>
+
+              <button type="submit" class="btn btn-auth-submit">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Ngay
+              </button>
+
+              <p class="auth-footer-text">
+                Chưa có tài khoản? <a href="javascript:void(0)" onclick="switchAuthTab('register')">Đăng ký thành viên mới</a>
+              </p>
+            </form>
+          </div>
+
+          <!-- PANE 2: FORM ĐĂNG KÝ -->
+          <div id="authPane_register" class="auth-pane" style="display: none;">
+            <form id="registerForm" novalidate>
+              <div class="auth-form-group">
+                <label for="registerName">Họ và tên <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-person-fill input-icon"></i>
+                  <input type="text" class="form-control" id="registerName" placeholder="Nguyễn Văn A" required>
+                </div>
+                <div class="auth-error-msg" id="registerNameError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="registerEmail">Địa chỉ Email <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-envelope-fill input-icon"></i>
+                  <input type="email" class="form-control" id="registerEmail" placeholder="name@example.com" required>
+                </div>
+                <div class="auth-error-msg" id="registerEmailError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="registerPhone">Số điện thoại (10 số) <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-telephone-fill input-icon"></i>
+                  <input type="tel" class="form-control" id="registerPhone" placeholder="0987654321" required>
+                </div>
+                <div class="auth-error-msg" id="registerPhoneError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="registerPassword">Mật khẩu (tối thiểu 6 ký tự) <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-shield-lock-fill input-icon"></i>
+                  <input type="password" class="form-control" id="registerPassword" placeholder="Nhập mật khẩu an toàn..." required>
+                  <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('registerPassword', this)" title="Ẩn/hiện mật khẩu">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </div>
+                <div class="auth-error-msg" id="registerPasswordError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="registerConfirmPassword">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-check2-circle input-icon"></i>
+                  <input type="password" class="form-control" id="registerConfirmPassword" placeholder="Nhập lại mật khẩu..." required>
+                  <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('registerConfirmPassword', this)" title="Ẩn/hiện mật khẩu">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </div>
+                <div class="auth-error-msg" id="registerConfirmError"></div>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="registerTerms" required>
+                <label class="form-check-label small text-muted" for="registerTerms">
+                  Tôi đồng ý với <a href="javascript:void(0)" class="text-decoration-none">Điều khoản dịch vụ</a> & <a href="javascript:void(0)" class="text-decoration-none">Chính sách bảo mật</a> của Delta Travel.
+                </label>
+                <div class="auth-error-msg" id="registerTermsError"></div>
+              </div>
+
+              <button type="submit" class="btn btn-auth-submit">
+                <i class="bi bi-person-check-fill me-1"></i> Đăng Ký Tài Khoản
+              </button>
+
+              <p class="auth-footer-text">
+                Đã có tài khoản? <a href="javascript:void(0)" onclick="switchAuthTab('login')">Đăng nhập ngay</a>
+              </p>
+            </form>
+          </div>
+
+          <!-- PANE 3: FORM QUÊN MẬT KHẨU -->
+          <div id="authPane_forgot" class="auth-pane" style="display: none;">
+            <p class="text-muted small mb-3">
+              Nhập Email hoặc Số điện thoại đã đăng ký để tạo mật khẩu mới cho tài khoản của bạn.
+            </p>
+            <form id="forgotForm" novalidate>
+              <div class="auth-form-group">
+                <label for="forgotAccount">Email hoặc Số điện thoại <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-envelope-at-fill input-icon"></i>
+                  <input type="text" class="form-control" id="forgotAccount" placeholder="Nhập Email hoặc SĐT..." required>
+                </div>
+                <div class="auth-error-msg" id="forgotAccountError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="forgotNewPassword">Mật khẩu mới (tối thiểu 6 ký tự) <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-key-fill input-icon"></i>
+                  <input type="password" class="form-control" id="forgotNewPassword" placeholder="Nhập mật khẩu mới..." required>
+                  <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('forgotNewPassword', this)" title="Ẩn/hiện mật khẩu">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </div>
+                <div class="auth-error-msg" id="forgotNewPasswordError"></div>
+              </div>
+
+              <div class="auth-form-group">
+                <label for="forgotConfirmPassword">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                <div class="auth-input-wrapper">
+                  <i class="bi bi-check2-all input-icon"></i>
+                  <input type="password" class="form-control" id="forgotConfirmPassword" placeholder="Nhập lại mật khẩu mới..." required>
+                  <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('forgotConfirmPassword', this)" title="Ẩn/hiện mật khẩu">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </div>
+                <div class="auth-error-msg" id="forgotConfirmPasswordError"></div>
+              </div>
+
+              <button type="submit" class="btn btn-auth-submit">
+                <i class="bi bi-arrow-repeat me-1"></i> Đặt Lại Mật Khẩu
+              </button>
+
+              <p class="auth-footer-text">
+                Nhớ lại mật khẩu? <a href="javascript:void(0)" onclick="switchAuthTab('login')">Quay lại Đăng nhập</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 7: HỒ SƠ & THÔNG TIN TÀI KHOẢN (USER PROFILE MODAL) -->
+  <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 overflow-hidden shadow-lg">
+        <div class="profile-card-header text-center">
+          <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="profile-avatar-large" id="profileAvatar">NA</div>
+          <h5 class="fw-bold text-white mb-1" id="profileFullName">Lê Văn An</h5>
+          <p class="text-white-50 small mb-0" id="profileEmail">an.levan@gmail.com</p>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Chỉ số thống kê -->
+          <div class="profile-stats-row">
+            <div class="profile-stat-box">
+              <div class="stat-val" id="profileTotalBookings">0</div>
+              <div class="stat-lbl">Đơn đã đặt</div>
+            </div>
+            <div class="profile-stat-box">
+              <div class="stat-val text-warning">VIP 1</div>
+              <div class="stat-lbl">Hạng thành viên</div>
+            </div>
+            <div class="profile-stat-box">
+              <div class="stat-val text-info" id="profileCreatedAt">15/10/2026</div>
+              <div class="stat-lbl">Ngày tham gia</div>
+            </div>
+          </div>
+
+          <!-- Tab điều hướng trong Profile -->
+          <ul class="nav nav-pills nav-fill mb-3" id="profilePills" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active small py-2 fw-semibold" id="pill-info-tab" data-bs-toggle="pill" data-bs-target="#pill-info" type="button" role="tab">
+                <i class="bi bi-person-lines-fill me-1"></i> Thông tin cá nhân
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link small py-2 fw-semibold" id="pill-password-tab" data-bs-toggle="pill" data-bs-target="#pill-password" type="button" role="tab">
+                <i class="bi bi-shield-lock me-1"></i> Đổi mật khẩu
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <!-- Tab 1: Cập nhật thông tin -->
+            <div class="tab-pane fade show active" id="pill-info" role="tabpanel">
+              <form id="profileEditForm">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Họ và tên</label>
+                  <input type="text" class="form-control" id="profileEditName" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Số điện thoại</label>
+                  <input type="tel" class="form-control" id="profileEditPhone" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Email (Định danh tài khoản)</label>
+                  <input type="email" class="form-control bg-light" id="profileEmailDisplay" disabled>
+                </div>
+                <button type="submit" class="btn btn-delta-primary w-100">
+                  <i class="bi bi-check2-circle me-1"></i> Lưu Thay Đổi
+                </button>
+              </form>
+            </div>
+
+            <!-- Tab 2: Đổi mật khẩu -->
+            <div class="tab-pane fade" id="pill-password" role="tabpanel">
+              <form id="changePasswordForm">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Mật khẩu hiện tại</label>
+                  <input type="password" class="form-control" id="profileCurrentPass" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Mật khẩu mới (tối thiểu 6 ký tự)</label>
+                  <input type="password" class="form-control" id="profileNewPass" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">Xác nhận mật khẩu mới</label>
+                  <input type="password" class="form-control" id="profileConfirmNewPass" required>
+                </div>
+                <button type="submit" class="btn btn-outline-danger w-100">
+                  <i class="bi bi-shield-check me-1"></i> Cập Nhật Mật Khẩu
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==========================================================================
        13. TIỆN ÍCH NỔI (FLOATING WIDGETS) & TOAST NOTIFICATION
        ========================================================================== -->
@@ -1233,6 +1526,76 @@
     <button class="floating-btn floating-top" id="backToTopBtn" title="Cuộn lên đầu trang">
       <i class="bi bi-arrow-up"></i>
     </button>
+  </div>
+
+  <!-- BONG BÓNG CHATBOT AI & CỬA SỔ CHAT TRỰC TUYẾN -->
+  <div class="chatbot-launcher no-print" id="chatbotLauncher">
+    <div class="chatbot-invite-pill" id="chatbotInvitePill">
+      <span>✨ Hỏi Delta AI về tour, giá vé & ưu đãi!</span>
+    </div>
+    <button class="chatbot-btn" id="chatbotLauncherBtn" title="Trò chuyện cùng Delta AI" aria-label="Mở khung trò chuyện AI">
+      <span class="chatbot-pulse-ring"></span>
+      <span class="chatbot-online-badge"></span>
+      <i class="bi bi-robot"></i>
+    </button>
+  </div>
+
+  <!-- Cửa sổ Chatbot chính -->
+  <div class="chatbot-window hidden no-print" id="chatbotWindow">
+    <!-- Header -->
+    <div class="chatbot-header">
+      <div class="chatbot-header-info">
+        <div class="chatbot-avatar-header">
+          <i class="bi bi-robot"></i>
+          <span class="status-dot"></span>
+        </div>
+        <div class="chatbot-title-box">
+          <h6>Trợ lý Delta AI <span class="badge-model">Gemini 2.5</span></h6>
+          <small><i class="bi bi-circle-fill text-success" style="font-size: 0.55rem;"></i> Trực tuyến 24/7 • Dữ liệu thật</small>
+        </div>
+      </div>
+      <div class="chatbot-header-actions">
+        <button class="chatbot-header-btn" id="chatbotResetBtn" title="Làm mới cuộc hội thoại">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button class="chatbot-header-btn" id="chatbotCloseBtn" title="Thu nhỏ chat">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Danh sách tin nhắn -->
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="chat-msg bot">
+        <div class="chat-msg-avatar" title="Delta AI"><i class="bi bi-robot"></i></div>
+        <div class="chat-msg-bubble">
+          <p class="mb-1">Xin chào bạn! 👋 Tôi là <strong>Delta AI</strong> - Trợ lý tư vấn du lịch thông minh của <strong>Delta Travel</strong>.</p>
+          <p class="mb-2">Tôi được nạp dữ liệu chi tiết về lịch trình, bảng giá, ưu đãi và chính sách của toàn bộ tour hiện có trên website. Bạn cần tư vấn tour nào hoặc có câu hỏi gì không?</p>
+          <span class="chat-msg-time">Vừa xong</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gợi ý câu hỏi nhanh (Quick Replies) -->
+    <div class="chatbot-quick-replies">
+      <button class="quick-reply-btn" data-query="Tư vấn tour đi Đà Nẵng 4N3Đ">🏖️ Tour Đà Nẵng</button>
+      <button class="quick-reply-btn" data-query="Có tour du thuyền Hạ Long nào hot?">🚢 Du thuyền Hạ Long</button>
+      <button class="quick-reply-btn" data-query="Gợi ý tour có giá dưới 4 triệu đồng">💰 Tour dưới 4 triệu</button>
+      <button class="quick-reply-btn" data-query="Hiện tại có những mã giảm giá voucher nào?">🎟️ Mã giảm giá</button>
+      <button class="quick-reply-btn" data-query="Chính sách thanh toán và hủy tour như thế nào?">📋 Chính sách hoàn hủy</button>
+      <button class="quick-reply-btn" data-query="Tư vấn tour Phú Quốc 3N2Đ nghỉ dưỡng">🌴 Tour Phú Quốc</button>
+    </div>
+
+    <!-- Khung nhập tin nhắn -->
+    <div class="chatbot-footer">
+      <div class="chatbot-input-group">
+        <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Hỏi Delta AI về tour, giá vé, lịch trình..." autocomplete="off">
+        <button class="chatbot-send-btn" id="chatbotSendBtn" title="Gửi tin nhắn">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+      <p class="chatbot-footnote">⚡ Powered by Google Gemini AI • Tư vấn thông minh 24/7</p>
+    </div>
   </div>
 
   <!-- Container chứa Toast thông báo -->
@@ -1249,5 +1612,11 @@
 
   <!-- Bộ điều khiển xử lý logic sự kiện & tính tiền -->
   <script src="assets/js/main.js"></script>
+
+  <!-- Hệ thống Đăng ký, Đăng nhập & Quản lý Tài khoản -->
+  <script src="assets/js/auth.js"></script>
+
+  <!-- Trợ lý ảo Chatbot AI kết nối Google Gemini API -->
+  <script src="assets/js/chatbot.js"></script>
 </body>
 </html>
