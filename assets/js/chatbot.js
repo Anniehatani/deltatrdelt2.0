@@ -230,6 +230,13 @@ function initChatbotUI() {
 /**
  * Ẩn / Hiện Cửa sổ Chatbot
  */
+
+function openChatbot() {
+  toggleChatbotWindow(true);
+}
+window.openChatbot = openChatbot;
+window.toggleChatbotWindow = toggleChatbotWindow;
+
 function toggleChatbotWindow(forceState) {
   const windowEl = document.getElementById("chatbotWindow");
   const invitePill = document.getElementById("chatbotInvitePill");

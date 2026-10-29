@@ -8,6 +8,8 @@
   <meta name="keywords" content="Delta Travel, đặt tour du lịch, du lịch việt nam, tour hạ long, tour đà nẵng, tour phú quốc">
 
   <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="icon" type="image/png" href="favicon_logo_delta.png">
+  <link rel="shortcut icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,8 +38,8 @@
        1. TOPBAR & HEADER
        ========================================================================== -->
   <header class="sticky-top">
-    <!-- Topbar liên hệ & tiện ích -->
-    <div class="topbar">
+    <!-- Topbar liên hệ & tiện ích (Chỉ hiển thị trên màn hình lớn >= 992px để tránh vỡ giao diện trên Mobile) -->
+    <div class="topbar d-none d-lg-block">
       <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
           <a href="tel:19008899"><i class="bi bi-telephone-fill text-warning"></i> Hotline: <strong>1900 8899</strong></a>
@@ -60,69 +62,74 @@
       </div>
     </div>
 
-    <!-- Thanh điều hướng chính (Navbar) -->
-    <nav class="navbar navbar-expand-lg navbar-delta">
-      <div class="container">
-        <!-- Logo thương hiệu -->
+    <!-- Thanh điều hướng chính (Navbar chuẩn Apple Liquid Glass) -->
+    <nav class="navbar navbar-delta position-relative">
+      <div class="container-fluid px-3 px-xl-5 d-flex align-items-center justify-content-between flex-nowrap">
+        <!-- Logo thương hiệu: Chữ Đen Luxury chuẩn deltatravel-main -->
         <a class="navbar-brand-delta" href="#home">
-          <div class="brand-icon">
-            <i class="bi bi-send-fill"></i>
+          <div class="brand-icon-crystal">
+            <img src="favicon_logo_delta.png" alt="DELTA TRAVEL Logo" class="brand-logo-img">
           </div>
           <div class="brand-text">
-            DELTA<span>TRAVEL</span>
-            <span class="brand-subtitle">Khám phá & Nghỉ dưỡng</span>
+            <span class="brand-title">DELTA TRAVEL</span>
+            <span class="brand-subtitle">KHÁM PHÁ & NGHỈ DƯỠNG</span>
           </div>
         </a>
 
-        <!-- Nút menu mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#deltaNavbar" aria-controls="deltaNavbar" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <!-- Thanh Tab Liquid Glass Capsule Dock (Nằm ngang chuẩn, không bao giờ ngắt cột dọc) -->
+        <div class="liquid-nav-dock d-none d-lg-inline-flex" id="liquidNavDock">
+          <a href="#home" class="liquid-nav-link active" onclick="setActiveNavLink(this)">Trang chủ</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('north', this)" class="liquid-nav-link">Miền Bắc</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('central', this)" class="liquid-nav-link">Miền Trung</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('south', this)" class="liquid-nav-link">Miền Nam</a>
+          <a href="#toursSection" onclick="filterToursRegion('all', this)" class="liquid-nav-link">Tất cả tour</a>
+          <a href="javascript:void(0)" onclick="openMyBookingsModal()" class="liquid-nav-link position-relative">
+            <span>Đơn của tôi</span>
+            <span id="navBookingBadge" class="badge rounded-pill bg-warning text-dark ms-1 booking-counter-badge" style="font-size: 10px; display: none;">0</span>
+          </a>
+          <a href="javascript:void(0)" onclick="openChatbot()" class="liquid-nav-link">
+            <i class="bi bi-stars text-warning"></i> Trợ lý AI
+          </a>
+        </div>
 
-        <!-- Menu các liên kết -->
-        <div class="collapse navbar-collapse" id="deltaNavbar">
-          <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta active" href="#home">Trang chủ</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#destinations">Điểm đến</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#toursSection">Tour nổi bật</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#flashSaleSection">
-                <i class="bi bi-lightning-charge-fill text-danger"></i> Flash Sale
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#whyChooseUs">Về Delta</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#travelBlog">Cẩm nang</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-link-delta" href="#contact">Liên hệ</a>
-            </li>
-          </ul>
+        <!-- Thao tác góc phải: Liquid User Profile Pill + Wishlist + Khám phá Tour -->
+        <div class="header-actions">
+          <!-- Khu vực tài khoản người dùng (Liquid Glass Capsule) -->
+          <div id="headerAuthContainer" class="d-inline-flex align-items-center"></div>
 
-          <!-- Thao tác góc phải -->
-          <div class="header-actions">
-            <!-- Khu vực tài khoản người dùng -->
-            <div id="headerAuthContainer" class="d-inline-flex align-items-center"></div>
+          <!-- Nút Yêu thích phong cách Liquid Capsule bo tròn -->
+          <button class="liquid-btn-icon d-none d-sm-inline-flex" onclick="openWishlistModal()" title="Tour yêu thích">
+            <i class="bi bi-heart"></i>
+            <span class="liquid-icon-badge wishlist-counter">0</span>
+          </button>
 
-            <button class="btn-icon-header d-lg-none" onclick="openWishlistModal()" title="Tour yêu thích">
-              <i class="bi bi-heart"></i>
-              <span class="header-badge wishlist-counter">0</span>
-            </button>
-            <button class="btn-icon-header d-lg-none" onclick="openMyBookingsModal()" title="Đơn của tôi">
-              <i class="bi bi-ticket-perforated"></i>
-            </button>
-            <a href="#toursSection" class="btn btn-delta-primary">
-              <i class="bi bi-compass"></i> Khám phá Tour
-            </a>
-          </div>
+          <!-- Nút Khám phá Tour Luxury (Hiển thị từ màn hình lớn >= 1200px) -->
+          <a href="#toursSection" class="btn-explore-liquid d-none d-xl-inline-flex">
+            <i class="bi bi-compass"></i> Khám phá Tour
+          </a>
+
+          <!-- Nút menu mobile chuẩn Liquid Glass (chỉ hiển thị dưới 992px) -->
+          <button class="liquid-btn-icon d-lg-none" type="button" onclick="toggleMobileMenu()" aria-label="Mở Menu">
+            <i class="bi bi-list fs-5" id="mobileMenuIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Dropdown Nav Drawer (Chỉ mở khi click menu mobile, tuyệt đối ẩn 100% trên Desktop) -->
+      <div class="glass-mobile-drawer" id="mobileDrawerMenu">
+        <div class="d-flex flex-column gap-1 max-w-md mx-auto">
+          <a href="#home" class="mobile-nav-item" onclick="closeMobileMenu()">Trang chủ</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('north'); closeMobileMenu();" class="mobile-nav-item">Miền Bắc</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('central'); closeMobileMenu();" class="mobile-nav-item">Miền Trung</a>
+          <a href="javascript:void(0)" onclick="filterToursRegion('south'); closeMobileMenu();" class="mobile-nav-item">Miền Nam</a>
+          <a href="#toursSection" onclick="filterToursRegion('all'); closeMobileMenu();" class="mobile-nav-item">Tất cả tour</a>
+          <a href="javascript:void(0)" onclick="openMyBookingsModal(); closeMobileMenu();" class="mobile-nav-item d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-ticket-perforated me-2 text-primary"></i> Đơn của tôi</span>
+            <span id="navBookingBadgeMobile" class="badge bg-warning text-dark" style="display: none;">0</span>
+          </a>
+          <a href="javascript:void(0)" onclick="openChatbot(); closeMobileMenu();" class="mobile-nav-item text-dark fw-bold">
+            <i class="bi bi-stars text-warning me-2"></i> Trợ lý AI Concierge
+          </a>
         </div>
       </div>
     </nav>
@@ -228,45 +235,7 @@
   </div>
 
   <!-- ==========================================================================
-       4. KHUYẾN MÃI FLASH SALE & ĐỒNG HỒ ĐẾM NGƯỢC
-       ========================================================================== -->
-  <section class="container" id="flashSaleSection">
-    <div class="flash-sale-wrapper">
-      <div class="flash-sale-info">
-        <div class="flash-icon">
-          <i class="bi bi-lightning-charge-fill"></i>
-        </div>
-        <div>
-          <h3 class="flash-title">FLASH SALE DU LỊCH 2026</h3>
-          <p class="flash-desc">Giảm giá lên đến 30% cho các tour hot nhất tuần này. Số lượng chỗ có hạn!</p>
-        </div>
-      </div>
-
-      <!-- Đồng hồ đếm ngược -->
-      <div class="d-flex align-items-center gap-2">
-        <span class="fw-bold text-dark d-none d-sm-inline">Kết thúc trong:</span>
-        <div class="countdown-box">
-          <div class="countdown-unit">
-            <span class="countdown-number" id="countdownHours">08</span>
-            <span class="countdown-label">Giờ</span>
-          </div>
-          <span class="countdown-separator">:</span>
-          <div class="countdown-unit">
-            <span class="countdown-number" id="countdownMinutes">42</span>
-            <span class="countdown-label">Phút</span>
-          </div>
-          <span class="countdown-separator">:</span>
-          <div class="countdown-unit">
-            <span class="countdown-number" id="countdownSeconds">19</span>
-            <span class="countdown-label">Giây</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==========================================================================
-       5. DANH SÁCH TOUR DU LỊCH NỔI BẬT & BỘ LỌC TABS
+       4. DANH SÁCH TOUR DU LỊCH NỔI BẬT & BỘ LỌC TABS
        ========================================================================== -->
   <section class="container my-5" id="toursSection">
     <div class="section-header">
@@ -290,13 +259,10 @@
         <button class="filter-pill" data-region="south">
           Miền Nam & Đảo Ngọc
         </button>
-        <button class="filter-pill pill-sale" data-region="sale">
-          <i class="bi bi-fire text-danger"></i> Đang Flash Sale
-        </button>
       </div>
 
       <div class="tour-sort-wrapper">
-        <span class="text-muted small fw-semibold me-2" id="tourResultCount">Hiển thị 6 / 6 tour</span>
+        <span class="text-muted small fw-semibold me-2" id="tourResultCount">Hiển thị 16 / 16 tour</span>
         <label for="tourSortSelect"><i class="bi bi-sort-down"></i> Sắp xếp:</label>
         <select class="form-select form-select-sm tour-sort-select" id="tourSortSelect">
           <option value="default">Mặc định nổi bật</option>
@@ -404,9 +370,9 @@
             "Chuyến đi du thuyền Hạ Long 3N2Đ cùng Delta Travel thật sự ngoài mong đợi! Phòng có ban công ngắm vịnh cực chill, đồ ăn buffet hải sản tươi ngon ngập tràn. Bạn HDV rất chu đáo và chụp ảnh siêu có tâm!"
           </p>
           <div class="testimonial-author">
-            <div class="author-avatar">NA</div>
+            <div class="author-avatar">MQ</div>
             <div class="author-info">
-              <h6>Nguyễn Hoàng Nam</h6>
+              <h6>Trần Minh Quân</h6>
               <p>Khách hàng Tour Hạ Long - Lan Hạ</p>
             </div>
           </div>
@@ -439,7 +405,7 @@
             <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
           </div>
           <p class="testimonial-text">
-            "Đi Phú Quốc lặn ngắm san hô cano riêng và đi cáp treo Hòn Thơm rất tuyệt vời. Giá tour Flash sale của Delta Travel rẻ hơn nhiều so với tự book lẻ từng dịch vụ. Nhất định sẽ quay lại ủng hộ tiếp!"
+            "Đi Phú Quốc lặn ngắm san hô cano riêng và đi cáp treo Hòn Thơm rất tuyệt vời. Giá tour ưu đãi trọn gói của Delta Travel rẻ hơn nhiều so với tự book lẻ từng dịch vụ. Nhất định sẽ quay lại ủng hộ tiếp!"
           </p>
           <div class="testimonial-author">
             <div class="author-avatar">LQ</div>
@@ -603,13 +569,13 @@
       <div class="row">
         <!-- Cột 1: Thông tin thương hiệu -->
         <div class="col-lg-4 col-md-6 mb-4">
-          <div class="navbar-brand-delta mb-3" style="color: #ffffff !important;">
-            <div class="brand-icon">
-              <i class="bi bi-send-fill"></i>
+          <div class="navbar-brand-delta d-flex align-items-center gap-2.5 mb-3" style="color: #ffffff !important;">
+            <div class="brand-icon-crystal" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">
+              <img src="favicon_logo_delta.png" alt="DELTA TRAVEL Logo" style="width: 32px; height: 32px; object-fit: contain;">
             </div>
-            <div class="brand-text text-white">
-              DELTA<span class="text-warning">TRAVEL</span>
-              <span class="brand-subtitle text-light">Thương hiệu lữ hành uy tín</span>
+            <div class="brand-text">
+              <span class="brand-title text-white">DELTA TRAVEL</span>
+              <span class="brand-subtitle" style="color: #94a3b8 !important;">KHÁM PHÁ & NGHỈ DƯỠNG</span>
             </div>
           </div>
           <p class="small text-muted mb-4">
@@ -630,7 +596,6 @@
             <li><a href="#toursSection"><i class="bi bi-chevron-right"></i> Tour Miền Bắc</a></li>
             <li><a href="#toursSection"><i class="bi bi-chevron-right"></i> Tour Miền Trung</a></li>
             <li><a href="#toursSection"><i class="bi bi-chevron-right"></i> Tour Miền Nam</a></li>
-            <li><a href="#flashSaleSection"><i class="bi bi-chevron-right"></i> Flash Sale Giá Sốc</a></li>
             <li><a href="#destinations"><i class="bi bi-chevron-right"></i> Điểm Đến Hấp Dẫn</a></li>
           </ul>
         </div>
@@ -1182,30 +1147,159 @@
     </div>
   </div>
 
-  <!-- MODAL 4: TRA CỨU & QUẢN LÝ ĐƠN ĐẶT CHỖ (MY BOOKINGS MODAL) -->
+  <!-- ==========================================================================
+       MODAL 4: QUẢN LÝ ĐƠN HÀNG CỦA TÔI (MY BOOKINGS - BÊ NGUYÊN TỪ DELTATRAVEL-MAIN)
+       ========================================================================== -->
   <div class="modal fade modal-my-bookings" id="myBookingsModal" tabindex="-1" aria-labelledby="myBookingsModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title" id="myBookingsModalTitle">
-            <i class="bi bi-ticket-perforated-fill text-info"></i> Quản Lý & Tra Cứu Đơn Đặt Chỗ
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+      <div class="modal-content liquid-modal-content border-0 shadow-2xl">
+        <div class="modal-header border-bottom p-4 bg-white d-flex align-items-center justify-content-between">
+          <div>
+            <span class="badge bg-amber-100 text-dark border px-2.5 py-1 rounded-pill small fw-bold mb-1" style="font-size: 11px; background: #fef3c7; color: #92400e;">
+              LỊCH SỬ ĐẶT TOUR • MY BOOKINGS
+            </span>
+            <h4 class="modal-title fw-bold text-dark mb-0">Quản Lý Chuyến Đi Của Bạn</h4>
+            <p class="text-muted small mb-0 mt-0.5">Theo dõi mã đơn, tiến độ xác nhận chỗ và thanh toán các hành trình nghỉ dưỡng cao cấp.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body p-4">
-          <!-- Ô tìm kiếm mã đơn hoặc SĐT -->
-          <div class="input-group mb-4">
-            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="searchBookingInput" placeholder="Nhập Mã đơn (VD: DELTA-849201) hoặc Số điện thoại..." oninput="searchBookings()">
-            <button class="btn btn-delta-primary" type="button" onclick="searchBookings()">Tra cứu</button>
+        <div class="modal-body p-4" style="background: #fafafa;">
+          <!-- AI Trip Concierge Card (Chuẩn deltatravel-main) -->
+          <div class="ai-concierge-card">
+            <div class="ai-concierge-eyebrow">
+              <i class="bi bi-stars"></i> DELTA AI • TRIP CONCIERGE
+            </div>
+            <div class="ai-concierge-title">AI theo dõi toàn bộ chuyến đi của bạn</div>
+            <div class="ai-concierge-desc">
+              AI đọc booking theo tài khoản để tóm tắt việc cần làm, hạn thanh toán và chính sách liên quan.
+            </div>
+
+            <!-- Gợi ý tương tác nhanh -->
+            <div class="ai-concierge-chips">
+              <button type="button" class="ai-concierge-chip" onclick="handleAiConciergePrompt('pending')">
+                <i class="bi bi-hourglass-split me-1 text-warning"></i> Đơn nào của tôi đang chờ thanh toán?
+              </button>
+              <button type="button" class="ai-concierge-chip" onclick="handleAiConciergePrompt('cancel')">
+                <i class="bi bi-shield-exclamation me-1 text-info"></i> Booking nào có thể hủy và điều kiện là gì?
+              </button>
+              <button type="button" class="ai-concierge-chip" onclick="handleAiConciergePrompt('next')">
+                <i class="bi bi-arrow-right-circle me-1 text-success"></i> Tôi cần làm gì tiếp theo cho chuyến đi?
+              </button>
+            </div>
+
+            <!-- Khung phản hồi AI -->
+            <div class="ai-concierge-response" id="aiConciergeResponseBox"></div>
           </div>
 
-          <!-- Danh sách đơn hàng từ LocalStorage -->
+          <!-- Thanh tìm kiếm & Tabs lọc trạng thái chuẩn -->
+          <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between mb-4">
+            <!-- Ô tìm kiếm -->
+            <div class="input-group input-group-sm" style="max-width: 340px;">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0" id="searchCustomerBookingInput" placeholder="Tìm theo Mã đơn (DL-...) hoặc SĐT..." oninput="handleCustomerBookingSearch(this.value)">
+            </div>
+
+            <!-- Tabs lọc trạng thái -->
+            <div class="d-flex flex-wrap gap-1" id="customerBookingStatusFilters">
+              <button type="button" class="btn btn-xs btn-dark rounded-pill px-3 py-1 fw-bold active" onclick="filterCustomerBookings('all', this)" style="font-size: 11.5px;">Tất cả</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold" onclick="filterCustomerBookings('PENDING_PAYMENT', this)" style="font-size: 11.5px;">Chờ thanh toán</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold" onclick="filterCustomerBookings('PAID', this)" style="font-size: 11.5px;">Đã thanh toán</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold" onclick="filterCustomerBookings('CONFIRMED', this)" style="font-size: 11.5px;">Đã duyệt chỗ</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5 py-1 fw-semibold" onclick="filterCustomerBookings('CANCELLED', this)" style="font-size: 11.5px;">Đã hủy</button>
+            </div>
+          </div>
+
+          <!-- Danh sách đơn hàng từ delta_bookings_v2 -->
           <div id="myBookingsContainer">
-            <!-- Sẽ render bằng JS -->
+            <!-- JavaScript render các thẻ đơn hàng hoặc Empty State -->
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4.1: CHI TIẾT ĐƠN HÀNG & CỔNG THANH TOÁN (BOOKING DETAIL & GATEWAY)
+       Ported 100% from deltatravel-main app/(account)/bookings/[id]/page.tsx
+       ========================================================================== -->
+  <div class="modal fade modal-booking-detail" id="customerBookingDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content liquid-modal-content border-0 shadow-2xl">
+        <div class="modal-header border-bottom p-4 bg-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; padding: 0;" onclick="openMyBookingsModal()">
+              <i class="bi bi-arrow-left"></i>
+            </button>
+            <div>
+              <span class="badge bg-dark text-white font-monospace px-2 py-0.5" id="cDetailBookingCode">DL-982101</span>
+              <h5 class="modal-title fw-bold text-dark mb-0 mt-0.5" id="cDetailTourTitle">Chi Tiết Đơn Đặt Chỗ</h5>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4" id="customerBookingDetailBody">
+          <!-- Sẽ render động thông tin đơn, đồng hồ đếm ngược 15 phút và cổng thanh toán -->
+        </div>
+
+        <div class="modal-footer border-top p-3 bg-light">
+          <button type="button" class="btn btn-outline-secondary" onclick="openMyBookingsModal()">
+            <i class="bi bi-arrow-left me-1"></i> Danh Sách Đơn
+          </button>
+          <button type="button" class="btn btn-dark" onclick="printETicketFromDetail()">
+            <i class="bi bi-printer me-1"></i> In Vé Điện Tử
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4.2: XÁC NHẬN HỦY ĐƠN ĐẶT TOUR (CUSTOMER CANCEL MODAL)
+       Ported 100% from deltatravel-main với 4 lý do chuẩn
+       ========================================================================== -->
+  <div class="modal fade modal-cancel-order" id="customerCancelBookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content liquid-modal-content border-0 shadow-2xl">
+        <div class="modal-header border-bottom p-4">
+          <h5 class="modal-title fw-bold text-danger">
+            <i class="bi bi-x-circle-fill me-1"></i> Xác Nhận Hủy Đơn Đặt Tour
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form onsubmit="handleCustomerConfirmCancel(event)">
+          <input type="hidden" id="customerCancelTargetId">
+          <div class="modal-body p-4">
+            <p class="small text-muted mb-3">
+              Bạn đang yêu cầu hủy đơn <strong id="customerCancelBookingId" class="text-dark"></strong> cho hành trình <strong id="customerCancelTourTitle" class="text-dark"></strong>.
+              Sau khi hủy, số chỗ giữ sẽ được hoàn lại kho và bạn có thể đặt lại bất cứ lúc nào.
+            </p>
+
+            <label class="form-label small fw-bold">Chọn nhanh lý do hủy tour:</label>
+            <div class="d-flex flex-wrap gap-1.5 mb-3">
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill" style="font-size: 11.5px;" onclick="setCustomerCancelReason('Thay đổi kế hoạch công tác / gia đình')">
+                Lịch bận công tác / gia đình
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill" style="font-size: 11.5px;" onclick="setCustomerCancelReason('Có việc bận đột xuất')">
+                Việc bận đột xuất
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill" style="font-size: 11.5px;" onclick="setCustomerCancelReason('Đặt nhầm ngày hoặc số lượng khách')">
+                Đặt nhầm ngày / số khách
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill" style="font-size: 11.5px;" onclick="setCustomerCancelReason('Muốn đổi sang hành trình khác')">
+                Đổi sang tour khác
+              </button>
+            </div>
+
+            <label class="form-label small fw-bold">Lý do hủy đơn chi tiết <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="customerCancelReasonInput" rows="3" placeholder="Nhập lý do hủy đơn của bạn..." required></textarea>
+          </div>
+          <div class="modal-footer border-top p-3 bg-light">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-danger fw-bold">Xác Nhận Hủy Đơn</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

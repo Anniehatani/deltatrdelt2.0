@@ -31,6 +31,7 @@ const AppState = {
 // II. KHỞI TẠO ỨNG DỤNG KHI TẢI TRANG (DOM CONTENT LOADED)
 // =============================================================================
 document.addEventListener("DOMContentLoaded", () => {
+  updateCustomerBookingCounters();
   initNavbarScroll();
   initFlashSaleTimer();
   renderDestinations();
@@ -48,6 +49,103 @@ document.addEventListener("DOMContentLoaded", () => {
 /**
  * Lắng nghe sự kiện cuộn trang để thêm hiệu ứng nền mờ cho Navbar
  */
+
+/**
+ * Lọc Tour theo Vùng miền từ thanh Liquid Glass Nav Dock
+ */
+function filterToursRegion(region, element) {
+  if (element) {
+    setActiveNavLink(element);
+  }
+  
+  AppState.activeRegion = region;
+
+  // Cập nhật trạng thái active của các nút filter-pill
+  const pills = document.querySelectorAll(".filter-pill");
+  pills.forEach(pill => {
+    pill.classList.toggle("active", pill.dataset.region === region);
+  });
+
+  // Đồng bộ ô chọn vùng miền ở Hero Search
+  const heroRegion = document.getElementById("heroRegion");
+  if (heroRegion) {
+    heroRegion.value = region;
+  }
+
+  renderTourCards();
+
+  // Cuộn mượt đến danh sách tour
+  const section = document.getElementById("toursSection");
+  if (section) {
+    section.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+function openChatbot() {
+  if (typeof toggleChatbotWindow === "function") {
+    toggleChatbotWindow(true);
+  } else {
+    const windowEl = document.getElementById("chatbotWindow");
+    if (windowEl) windowEl.classList.remove("hidden");
+  }
+}
+window.openChatbot = openChatbot;
+
+function setActiveNavLink(element) {
+  const links = document.querySelectorAll(".liquid-nav-link");
+  links.forEach(l => l.classList.remove("active"));
+  if (element) element.classList.add("active");
+}
+
+function toggleMobileMenu() {
+  const drawer = document.getElementById("mobileDrawerMenu");
+  const icon = document.getElementById("mobileMenuIcon");
+  if (!drawer) return;
+  const isShowing = drawer.classList.toggle("show");
+  if (icon) {
+    icon.className = isShowing ? "bi bi-x-lg fs-5" : "bi bi-list fs-5";
+  }
+}
+
+function closeMobileMenu() {
+  const drawer = document.getElementById("mobileDrawerMenu");
+  const icon = document.getElementById("mobileMenuIcon");
+  if (drawer) drawer.classList.remove("show");
+  if (icon) icon.className = "bi bi-list fs-5";
+}
+
+function closeMobileNav() {
+  closeMobileMenu();
+}
+
+window.toggleMobileMenu = toggleMobileMenu;
+window.closeMobileMenu = closeMobileMenu;
+window.closeMobileNav = closeMobileNav;
+
+function updateCustomerBookingCounters() {
+  const bookings = getLocalBookings();
+  const count = bookings.length;
+  const badgeDesk = document.getElementById("navBookingBadge");
+  const badgeMobile = document.getElementById("navBookingBadgeMobile");
+
+  if (badgeDesk) {
+    if (count > 0) {
+      badgeDesk.textContent = count;
+      badgeDesk.style.display = "inline-block";
+    } else {
+      badgeDesk.style.display = "none";
+    }
+  }
+  if (badgeMobile) {
+    if (count > 0) {
+      badgeMobile.textContent = count;
+      badgeMobile.style.display = "inline-block";
+    } else {
+      badgeMobile.style.display = "none";
+    }
+  }
+}
+
 function initNavbarScroll() {
   const navbar = document.querySelector(".navbar-delta");
   const backToTopBtn = document.getElementById("backToTopBtn");
@@ -184,10 +282,8 @@ function renderTourCards() {
 
   // 1. Lọc theo từ khóa, vùng miền, mức giá, flash sale
   let filtered = TOURS_DATA.filter(tour => {
-    // Lọc theo vùng miền hoặc Flash sale tab
-    if (AppState.activeRegion === "sale") {
-      if (!tour.isFlashSale) return false;
-    } else if (AppState.activeRegion !== "all") {
+    // Lọc theo vùng miền
+    if (AppState.activeRegion !== "all") {
       if (tour.region !== AppState.activeRegion) return false;
     }
 
@@ -223,7 +319,11 @@ function renderTourCards() {
 
   // 3. Hiển thị số lượng kết quả
   if (countEl) {
-    countEl.textContent = `Hiển thị ${filtered.length} / ${TOURS_DATA.length} tour`;
+    let regionLabel = "Tất cả vùng miền";
+    if (AppState.activeRegion === "north") regionLabel = "Miền Bắc";
+    else if (AppState.activeRegion === "central") regionLabel = "Miền Trung & Tây Nguyên";
+    else if (AppState.activeRegion === "south") regionLabel = "Miền Nam & Đảo Ngọc";
+    countEl.innerHTML = `<span class="badge bg-dark rounded-pill px-2.5 py-1 text-white me-1">${regionLabel}</span> Hiển thị ${filtered.length} / ${TOURS_DATA.length} tour`;
   }
 
   // 4. Nếu không tìm thấy tour phù hợp
@@ -253,7 +353,7 @@ function renderTourCards() {
           <div class="tour-card-thumb">
             <img src="${tour.image}" alt="${tour.title}" loading="lazy">
             <div class="tour-badge-group">
-              ${tour.isFlashSale ? `<span class="badge-tour badge-tour-sale"><i class="bi bi-lightning-fill"></i> ${tour.badge}</span>` : `<span class="badge-tour badge-tour-popular">${tour.badge}</span>`}
+              <span class="badge-tour badge-tour-popular">${tour.badge || "TOUR NỔI BẬT"}</span>
             </div>
             <button class="btn-wishlist ${isFav ? 'active' : ''}" onclick="toggleWishlist('${tour.id}', event)" title="Thêm vào yêu thích">
               <i class="bi ${isFav ? 'bi-heart-fill' : 'bi-heart'}"></i>
@@ -334,6 +434,22 @@ function initFilterEvents() {
       pills.forEach(p => p.classList.remove("active"));
       pill.classList.add("active");
       AppState.activeRegion = pill.dataset.region || "all";
+      
+      // Đồng bộ Liquid Nav Dock
+      const navLinks = document.querySelectorAll(".liquid-nav-dock .liquid-nav-link");
+      navLinks.forEach(link => {
+        const text = link.textContent.trim().toLowerCase();
+        if (AppState.activeRegion === "all" && text.includes("tất cả")) {
+          setActiveNavLink(link);
+        } else if (AppState.activeRegion === "north" && text.includes("bắc")) {
+          setActiveNavLink(link);
+        } else if (AppState.activeRegion === "central" && text.includes("trung")) {
+          setActiveNavLink(link);
+        } else if (AppState.activeRegion === "south" && text.includes("nam")) {
+          setActiveNavLink(link);
+        }
+      });
+      
       renderTourCards();
     });
   });
@@ -947,6 +1063,7 @@ function handleBookingSubmission(e) {
   // Xác định trạng thái thanh toán
   const isPaid = (AppState.selectedPaymentMethod !== "cash");
   const statusText = isPaid ? "ĐÃ THANH TOÁN" : "CHỜ THANH TOÁN (24H)";
+  const statusCode = isPaid ? "PAID" : "AWAITING_CASH";
 
   // 5. Tạo đối tượng đơn hàng đầy đủ
   const currentUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
@@ -976,6 +1093,7 @@ function handleBookingSubmission(e) {
     },
     paymentMethod: getPaymentMethodLabel(AppState.selectedPaymentMethod),
     status: statusText,
+    statusCode: statusCode,
     isPaid: isPaid,
     createdAt: new Date().toLocaleString("vi-VN")
   };
@@ -983,11 +1101,14 @@ function handleBookingSubmission(e) {
   // 6. Lưu vào LocalStorage
   saveBookingToLocalStorage(newOrder);
 
-  // 7. Ẩn modal đặt hàng và mở modal Vé Điện Tử
+  // 7. Ẩn modal đặt hàng, cập nhật badge số đơn và mở màn hình Chi Tiết Đơn & Thanh Toán
   bootstrap.Modal.getInstance(document.getElementById("bookingModal"))?.hide();
-  displayETicket(newOrder);
+  updateCustomerBookingCounters();
+  
+  // Mở ngay màn hình Chi Tiết Đơn Hàng & Cổng Thanh Toán chuẩn deltatravel-main
+  openCustomerBookingDetail(newOrder.bookingId);
 
-  showToast("Đặt tour thành công! Vé điện tử đã được tạo.", "success");
+  showToast("Đặt tour thành công! Mã đơn của bạn là " + newOrder.bookingId, "success");
 }
 
 function getPaymentMethodLabel(method) {
@@ -1004,8 +1125,11 @@ function getPaymentMethodLabel(method) {
 // XIII. QUẢN LÝ ĐƠN HÀNG TRÊN LOCALSTORAGE
 // =============================================================================
 function getLocalBookings() {
+  if (typeof getBookingsData === "function") {
+    return getBookingsData();
+  }
   try {
-    return JSON.parse(localStorage.getItem("delta_bookings")) || [];
+    return JSON.parse(localStorage.getItem("delta_bookings_v2")) || [];
   } catch (e) {
     return [];
   }
@@ -1014,7 +1138,46 @@ function getLocalBookings() {
 function saveBookingToLocalStorage(order) {
   const orders = getLocalBookings();
   orders.unshift(order); // Đưa đơn mới lên đầu mảng
-  localStorage.setItem("delta_bookings", JSON.stringify(orders));
+  if (typeof saveBookingsData === "function") {
+    saveBookingsData(orders);
+  } else {
+    localStorage.setItem("delta_bookings_v2", JSON.stringify(orders));
+  }
+
+  // Tự động tạo bản ghi thanh toán thật vào hệ thống
+  try {
+    const payments = (typeof getPaymentsData === "function") ? getPaymentsData() : [];
+    const providerKey = (AppState.selectedPaymentMethod === "cash") ? "CASH" : (AppState.selectedPaymentMethod === "qr") ? "QR" : (AppState.selectedPaymentMethod === "ewallet") ? "MOMO" : "VNPAY";
+    const refCode = order.isPaid ? ("VQR-" + Math.floor(100000 + Math.random() * 900000)) : ("CASH-PENDING-" + order.bookingId);
+    const newPay = {
+      id: "PAY-" + Date.now().toString().slice(-6),
+      bookingId: order.bookingId,
+      customerName: order.customer.fullName,
+      tourTitle: order.tourTitle,
+      amount: order.pricing.total,
+      provider: providerKey,
+      providerName: getPaymentMethodLabel(AppState.selectedPaymentMethod),
+      status: order.isPaid ? "SUCCEEDED" : "INITIATED",
+      reference: refCode,
+      note: order.isPaid ? "Thanh toán trực tuyến thành công" : "Chờ thu tiền mặt trực tiếp tại quầy",
+      createdAt: order.createdAt
+    };
+    payments.unshift(newPay);
+    if (typeof savePaymentsData === "function") {
+      savePaymentsData(payments);
+    }
+  } catch (err) {
+    console.warn("Lỗi lưu payment:", err);
+  }
+
+  // Tự động ghi nhật ký kiểm toán hệ thống
+  try {
+    if (typeof addAuditLog === "function") {
+      addAuditLog("CREATE_BOOKING", "Booking", order.bookingId, `Khách hàng ${order.customer.fullName} đặt tour ${order.tourTitle} (${order.passengers.adults} lớn, ${order.passengers.children} trẻ) - Tổng tiền: ${order.pricing.total.toLocaleString("vi-VN")} đ [${order.paymentMethod}]`);
+    }
+  } catch (e) {}
+
+  window.dispatchEvent(new CustomEvent("delta_bookings_updated", { detail: orders }));
 }
 
 // =============================================================================
@@ -1063,87 +1226,139 @@ function printETicket() {
 }
 
 // =============================================================================
-// XV. TRA CỨU & QUẢN LÝ ĐƠN ĐẶT CHỖ (MY BOOKINGS MODAL)
+// XV. QUẢN LÝ ĐƠN HÀNG CỦA TÔI (MY BOOKINGS & CHI TIẾT ĐƠN HÀNG)
+// Ported 100% from deltatravel-main apps/web/src/app/(account)/bookings/
 // =============================================================================
+
+let activeCountdownTimer = null;
+let currentCustomerBookingFilter = "all";
+let currentCustomerBookingSearch = "";
+
 /**
- * Mở modal Quản lý và tra cứu đơn đặt chỗ
+ * Mở modal Quản lý và tra cứu đơn đặt tour
  */
 function openMyBookingsModal() {
   const modalEl = document.getElementById("myBookingsModal");
   if (!modalEl) return;
 
-  renderMyBookingsList();
+  updateCustomerBookingCounters();
+  renderCustomerOrdersList(currentCustomerBookingSearch, currentCustomerBookingFilter);
 
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
 }
 
 /**
- * Kết xuất danh sách các đơn đã đặt từ localStorage
+ * Kết xuất danh sách đơn đặt của khách hàng
  */
-function renderMyBookingsList(searchFilter = "") {
+function renderCustomerOrdersList(searchFilter = "", statusFilter = "all") {
   const container = document.getElementById("myBookingsContainer");
   if (!container) return;
 
+  currentCustomerBookingSearch = searchFilter;
+  currentCustomerBookingFilter = statusFilter;
+
   let bookings = getLocalBookings();
 
+  // Lọc theo từ khóa tìm kiếm
   if (searchFilter.trim() !== "") {
     const kw = searchFilter.trim().toLowerCase();
     bookings = bookings.filter(b =>
-      b.bookingId.toLowerCase().includes(kw) ||
-      b.customer.phone.includes(kw) ||
-      b.customer.fullName.toLowerCase().includes(kw) ||
-      (b.customer.email && b.customer.email.toLowerCase().includes(kw)) ||
-      (b.userEmail && b.userEmail.toLowerCase().includes(kw))
+      (b.bookingId && b.bookingId.toLowerCase().includes(kw)) ||
+      (b.customer?.phone && b.customer.phone.includes(kw)) ||
+      (b.customer?.fullName && b.customer.fullName.toLowerCase().includes(kw)) ||
+      (b.tourTitle && b.tourTitle.toLowerCase().includes(kw))
     );
   }
 
+  // Lọc theo trạng thái
+  if (statusFilter !== "all") {
+    bookings = bookings.filter(b => b.statusCode === statusFilter);
+  }
+
+  // Khi chưa có đơn hàng nào (Empty State chuẩn deltatravel-main)
   if (bookings.length === 0) {
     container.innerHTML = `
-      <div class="text-center py-5">
-        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-        <h5 class="fw-bold text-muted mt-3">Không tìm thấy đơn đặt tour nào</h5>
-        <p class="text-muted small">Bạn chưa thực hiện đặt tour hoặc số điện thoại tìm kiếm không khớp.</p>
+      <div class="rounded-4 border border-dashed border-2 p-5 text-center bg-white my-3 shadow-xs">
+        <div class="mb-3">
+          <i class="bi bi-ticket-detailed text-muted" style="font-size: 52px;"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-2">Bạn chưa có đơn đặt tour nào</h4>
+        <p class="text-muted small mx-auto mb-4" style="max-width: 440px;">
+          Hãy khám phá các hành trình du lịch & nghỉ dưỡng 5 sao của Delta Travel và tiến hành đặt chỗ ngay hôm nay.
+        </p>
+        <button class="btn btn-dark rounded-pill px-4 py-2.5 fw-bold shadow-sm" onclick="bootstrap.Modal.getInstance(document.getElementById('myBookingsModal'))?.hide(); document.getElementById('toursSection')?.scrollIntoView({behavior: 'smooth'});">
+          <i class="bi bi-compass me-1"></i> Khám phá Tour ngay
+        </button>
       </div>
     `;
     return;
   }
 
+  // Render danh sách thẻ đơn hàng chuẩn luxury
   container.innerHTML = bookings.map(b => {
-    let badgeClass = "booking-badge-paid";
-    if (b.status.includes("CHỜ")) badgeClass = "booking-badge-pending";
-    if (b.status.includes("HỦY")) badgeClass = "booking-badge-cancelled";
+    // Trạng thái badge
+    let statusClass = "status-paid";
+    let statusLabel = b.status || "ĐÃ THANH TOÁN";
+    
+    if (b.statusCode === "PENDING_PAYMENT") {
+      statusClass = "status-pending";
+      statusLabel = "Chờ thanh toán (15 phút)";
+    } else if (b.statusCode === "AWAITING_CASH") {
+      statusClass = "status-cash";
+      statusLabel = "Chờ thu tiền mặt tại quầy";
+    } else if (b.statusCode === "PAID") {
+      statusClass = "status-paid";
+      statusLabel = "Đã thanh toán";
+    } else if (b.statusCode === "CONFIRMED") {
+      statusClass = "status-confirmed";
+      statusLabel = "Đã duyệt giữ chỗ";
+    } else if (b.statusCode === "COMPLETED") {
+      statusClass = "status-completed";
+      statusLabel = "Hoàn thành chuyến đi";
+    } else if (b.statusCode === "CANCELLED") {
+      statusClass = "status-cancelled";
+      statusLabel = "Đã hủy đơn";
+    }
+
+    const canCancel = (b.statusCode === "PENDING_PAYMENT" || b.statusCode === "AWAITING_CASH" || b.statusCode === "PAID");
 
     return `
-      <div class="my-booking-card">
-        <div class="my-booking-header">
-          <div>
-            <span class="fw-bold text-primary">${b.bookingId}</span>
-            <span class="text-muted small ms-2">&bull; ${b.createdAt}</span>
+      <div class="booking-luxury-card">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-3 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="booking-status-pill ${statusClass}">
+              <i class="bi bi-circle-fill" style="font-size: 6px;"></i> ${statusLabel}
+            </span>
+            <span class="text-muted font-monospace small">#${b.bookingId}</span>
           </div>
-          <span class="${badgeClass}">${b.status}</span>
+          <span class="text-muted small"><i class="bi bi-clock me-1"></i> ${b.createdAt}</span>
         </div>
 
-        <div class="row align-items-center">
+        <div class="row align-items-center g-3">
           <div class="col-md-7">
-            <h6 class="fw-bold text-dark mb-1">${b.tourTitle}</h6>
-            <div class="small text-muted mb-1">
-              <i class="bi bi-calendar-event"></i> Ngày đi: <strong>${b.departureDate}</strong> &bull;
-              <i class="bi bi-person"></i> Người đặt: <strong>${b.customer.fullName}</strong> (${b.customer.phone})
+            <h5 class="fw-bold text-dark mb-1">${b.tourTitle}</h5>
+            <div class="small text-secondary mb-1">
+              <i class="bi bi-calendar-event me-1 text-primary"></i> Khởi hành: <strong>${b.departureDate}</strong>
+              <span class="mx-1.5">•</span>
+              <i class="bi bi-people me-1 text-info"></i> ${b.passengers?.adults || 1} Người lớn${b.passengers?.children ? `, ${b.passengers.children} Trẻ em` : ''}
             </div>
             <div class="small text-muted">
-              Phương thức: ${b.paymentMethod}
+              <i class="bi bi-credit-card me-1"></i> Phương thức: <strong>${b.paymentMethod || 'Chuyển khoản QR'}</strong>
             </div>
           </div>
-          <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <div class="fw-bold text-danger fs-5 mb-2">${formatVND(b.pricing.total)}</div>
-            <div class="d-flex gap-2 justify-content-md-end">
-              <button class="btn btn-sm btn-outline-primary" onclick="viewExistingTicket('${b.bookingId}')">
-                <i class="bi bi-receipt"></i> Xem vé
+
+          <div class="col-md-5 text-md-end">
+            <div class="small text-muted text-uppercase fw-semibold" style="font-size: 11px;">Tổng tiền thanh toán</div>
+            <div class="fw-bold text-danger fs-5 mb-2">${formatVND(b.pricing?.total || 0)}</div>
+            
+            <div class="d-flex flex-wrap gap-1.5 justify-content-md-end">
+              <button class="btn btn-sm btn-dark rounded-pill px-3 fw-bold" onclick="openCustomerBookingDetail('${b.bookingId}')">
+                <i class="bi bi-arrow-right-circle me-1"></i> Chi tiết & Thanh toán
               </button>
-              ${!b.status.includes("HỦY") ? `
-                <button class="btn btn-sm btn-outline-danger" onclick="cancelBooking('${b.bookingId}')">
-                  <i class="bi bi-x-circle"></i> Hủy lịch
+              ${canCancel ? `
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-2.5" onclick="openCustomerCancelModal('${b.bookingId}')" title="Hủy đơn đặt">
+                  <i class="bi bi-x-circle"></i> Hủy
                 </button>
               ` : ''}
             </div>
@@ -1154,42 +1369,448 @@ function renderMyBookingsList(searchFilter = "") {
   }).join("");
 }
 
-/**
- * Tìm kiếm đơn đặt chỗ theo mã đơn hoặc số điện thoại
- */
-function searchBookings() {
-  const kw = document.getElementById("searchBookingInput")?.value || "";
-  renderMyBookingsList(kw);
+function handleCustomerBookingSearch(val) {
+  renderCustomerOrdersList(val, currentCustomerBookingFilter);
+}
+
+function filterCustomerBookings(status, btnEl) {
+  const btns = document.querySelectorAll("#customerBookingStatusFilters button");
+  btns.forEach(b => {
+    b.classList.remove("btn-dark", "active");
+    b.classList.add("btn-outline-secondary");
+  });
+  if (btnEl) {
+    btnEl.classList.remove("btn-outline-secondary");
+    btnEl.classList.add("btn-dark", "active");
+  }
+  renderCustomerOrdersList(currentCustomerBookingSearch, status);
 }
 
 /**
- * Xem lại vé điện tử của một đơn hàng đã lưu
+ * Xử lý AI Trip Concierge trong modal Đơn của tôi
  */
-function viewExistingTicket(bookingId) {
+function handleAiConciergePrompt(type) {
+  const box = document.getElementById("aiConciergeResponseBox");
+  if (!box) return;
+
+  box.style.display = "block";
+  box.innerHTML = `<div class="text-warning small"><i class="bi bi-arrow-repeat spin"></i> Delta AI đang phân tích dữ liệu booking của bạn...</div>`;
+
   const bookings = getLocalBookings();
-  const order = bookings.find(b => b.bookingId === bookingId);
-  if (order) {
-    bootstrap.Modal.getInstance(document.getElementById("myBookingsModal"))?.hide();
-    displayETicket(order);
+
+  setTimeout(() => {
+    let reply = "";
+    if (type === "pending") {
+      const pendingList = bookings.filter(b => b.statusCode === "PENDING_PAYMENT" || b.statusCode === "AWAITING_CASH");
+      if (pendingList.length === 0) {
+        reply = "Tuyệt vời! Bạn không có đơn đặt tour nào đang chờ thanh toán. Tất cả các hành trình của bạn đều đã được bảo đảm.";
+      } else {
+        reply = `Bạn hiện có <strong>${pendingList.length} đơn</strong> đang chờ hoàn tất: <br>`
+          + pendingList.map(b => `- Đơn <strong>${b.bookingId}</strong> (${b.tourTitle}): Số tiền ${formatVND(b.pricing?.total || 0)}. Vui lòng thanh toán qua VietQR hoặc tại quầy trước hạn giữ chỗ.`).join("<br>");
+      }
+    } else if (type === "cancel") {
+      reply = "<strong>Chính sách hủy tour minh bạch của Delta Travel:</strong><br>"
+        + "- Miễn phí hủy tour 100% khi thực hiện trước 48 giờ so với ngày khởi hành.<br>"
+        + "- Hủy trong vòng 24h - 48h: Phí dịch vụ 20%.<br>"
+        + "- Các đơn chưa thanh toán hoặc chờ tiền mặt có thể hủy trực tiếp tức thì trên ứng dụng mà không phát sinh phí.";
+    } else if (type === "next") {
+      if (bookings.length === 0) {
+        reply = "Bạn chưa có chuyến đi nào sắp tới. Hãy xem qua danh sách tour nổi bật của Delta Travel để chọn cho mình một kỳ nghỉ lý tưởng!";
+      } else {
+        const nextBooking = bookings.find(b => b.statusCode !== "CANCELLED") || bookings[0];
+        reply = `Hành trình sắp tới của bạn là <strong>${nextBooking.tourTitle}</strong> (Khởi hành ngày ${nextBooking.departureDate}).<br>`
+          + "- Hãy chuẩn bị CCCD / Hộ chiếu bản gốc của các thành viên.<br>"
+          + "- Hướng dẫn viên Delta Travel sẽ gọi điện thoại xác nhận điểm đón trước giờ xuất phát 12 giờ.<br>"
+          + "- Bạn có thể bấm 'Xem chi tiết đơn' để tải vé điện tử hoặc in hóa đơn xác nhận.";
+      }
+    }
+
+    box.innerHTML = `
+      <div class="d-flex align-items-center gap-2 mb-1 text-warning fw-bold small">
+        <i class="bi bi-robot"></i> Trợ lý Delta AI Concierge:
+      </div>
+      <div>${reply}</div>
+    `;
+  }, 350);
+}
+
+/**
+ * Mở modal Chi tiết đơn hàng & Cổng thanh toán (Booking Detail & Payment Gateway)
+ * Ported 100% từ deltatravel-main app/(account)/bookings/[id]/page.tsx
+ */
+function openCustomerBookingDetail(bookingId) {
+  const bookings = getLocalBookings();
+  const b = bookings.find(item => item.bookingId === bookingId);
+  if (!b) return;
+
+  // Ẩn modal danh sách nếu đang mở
+  bootstrap.Modal.getInstance(document.getElementById("myBookingsModal"))?.hide();
+
+  document.getElementById("cDetailBookingCode").textContent = b.bookingId;
+  document.getElementById("cDetailTourTitle").textContent = b.tourTitle;
+
+  const bodyEl = document.getElementById("customerBookingDetailBody");
+  if (!bodyEl) return;
+
+  // Xóa timer cũ nếu có
+  if (activeCountdownTimer) {
+    clearInterval(activeCountdownTimer);
+    activeCountdownTimer = null;
+  }
+
+  const isPending = (b.statusCode === "PENDING_PAYMENT");
+  const isAwaitingCash = (b.statusCode === "AWAITING_CASH");
+  const isPaid = (b.statusCode === "PAID" || b.statusCode === "CONFIRMED");
+  const isCancelled = (b.statusCode === "CANCELLED");
+
+  bodyEl.innerHTML = `
+    ${isPending ? `
+      <!-- Khung đếm ngược giữ chỗ 15 phút -->
+      <div class="booking-countdown-box">
+        <div class="d-flex align-items-center gap-3">
+          <div class="countdown-radar"></div>
+          <div>
+            <div class="fw-bold text-dark small">Thời gian giữ chỗ ưu đãi còn lại:</div>
+            <div class="text-muted" style="font-size: 11.5px;">Vui lòng hoàn tất thanh toán trước khi thời gian giữ chỗ kết thúc</div>
+          </div>
+        </div>
+        <div class="countdown-digits" id="bookingDetailTimer">14:59</div>
+      </div>
+
+      <!-- Cổng thanh toán trực tuyến -->
+      <div class="p-3 bg-white rounded-3 border mb-4 shadow-xs">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-1"></i> Chọn Phương Thức Thanh Toán</h6>
+        
+        <div class="payment-methods-grid">
+          <!-- 1. Quét mã VietQR -->
+          <div class="payment-option-card selected" onclick="selectDetailPaymentOption('QR', this)">
+            <div class="d-flex align-items-center gap-2.5">
+              <i class="bi bi-qr-code fs-4 text-primary"></i>
+              <div>
+                <div class="fw-bold small text-dark">Chuyển khoản VietQR Ngân Hàng (Khuyên dùng)</div>
+                <div class="text-muted" style="font-size: 11px;">Quét mã QR tự động xác nhận tức thì qua Napas247</div>
+              </div>
+            </div>
+            <input type="radio" name="detailPayMethod" value="QR" checked class="form-check-input">
+          </div>
+
+          <!-- Chi tiết VietQR -->
+          <div id="detailVietQrBox" class="p-3 bg-light rounded-3 border mb-2 text-center">
+            <img src="assets/images/qr-payment.png" alt="Mã VietQR Thanh Toán" style="width: 160px; height: 160px; object-fit: contain; border-radius: 8px;" class="mb-2 shadow-xs" onerror="this.onerror=null; this.src='assets/images/qr-payment.jpg';">
+            <div class="small fw-bold text-dark">Ngân Hàng Vietcombank - CN Hà Nội</div>
+            <div class="small text-muted font-monospace">STK: <strong>1900 8899 88</strong> • Chủ TK: <strong>DELTA TRAVEL CORP</strong></div>
+            <div class="small text-danger fw-bold mt-1">Cú pháp CK: <code class="p-1 bg-white border rounded text-danger">${b.bookingId}</code></div>
+          </div>
+
+          <!-- 2. Tiền mặt tại quầy -->
+          <div class="payment-option-card" onclick="selectDetailPaymentOption('CASH', this)">
+            <div class="d-flex align-items-center gap-2.5">
+              <i class="bi bi-cash-coin fs-4 text-success"></i>
+              <div>
+                <div class="fw-bold small text-dark">Thanh toán Tiền mặt tại quầy giao dịch Delta</div>
+                <div class="text-muted" style="font-size: 11px;">Giữ chỗ 24h và thanh toán trực tiếp tại văn phòng Hà Nội / TP.HCM</div>
+              </div>
+            </div>
+            <input type="radio" name="detailPayMethod" value="CASH" class="form-check-input">
+          </div>
+
+          <!-- 3. Cổng VNPay -->
+          <div class="payment-option-card" onclick="selectDetailPaymentOption('VNPAY', this)">
+            <div class="d-flex align-items-center gap-2.5">
+              <i class="bi bi-credit-card fs-4 text-info"></i>
+              <div>
+                <div class="fw-bold small text-dark">Cổng thanh toán VNPay Sandbox</div>
+                <div class="text-muted" style="font-size: 11px;">Hỗ trợ thẻ ATM nội địa của 40+ ngân hàng Việt Nam</div>
+              </div>
+            </div>
+            <input type="radio" name="detailPayMethod" value="VNPAY" class="form-check-input">
+          </div>
+
+          <!-- 4. Ví MoMo -->
+          <div class="payment-option-card" onclick="selectDetailPaymentOption('MOMO', this)">
+            <div class="d-flex align-items-center gap-2.5">
+              <i class="bi bi-wallet2 fs-4 text-danger"></i>
+              <div>
+                <div class="fw-bold small text-dark">Ví điện tử MoMo</div>
+                <div class="text-muted" style="font-size: 11px;">Thanh toán siêu tốc qua ứng dụng MoMo</div>
+              </div>
+            </div>
+            <input type="radio" name="detailPayMethod" value="MOMO" class="form-check-input">
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-dark w-100 py-2.5 fw-bold rounded-3 shadow-sm mt-2" onclick="handleCustomerPayNow('${b.bookingId}')">
+          <i class="bi bi-check-circle-fill text-warning me-1"></i> Xác Nhận Thanh Toán Ngay (${formatVND(b.pricing?.total || 0)})
+        </button>
+      </div>
+    ` : ''}
+
+    ${isAwaitingCash ? `
+      <div class="alert alert-info d-flex align-items-center gap-3 rounded-3 mb-4">
+        <i class="bi bi-info-circle-fill fs-3 text-info"></i>
+        <div>
+          <div class="fw-bold">Đơn hàng đang chờ thu tiền mặt tại quầy</div>
+          <div class="small">Vui lòng ghé văn phòng Delta Travel (Tầng 8 Delta Tower, Hà Nội hoặc Chi nhánh Quận 1, TP.HCM) trong vòng 24 giờ để hoàn tất thủ tục giữ chỗ.</div>
+        </div>
+      </div>
+    ` : ''}
+
+    ${isPaid ? `
+      <div class="alert alert-success d-flex align-items-center justify-content-between rounded-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+          <div>
+            <div class="fw-bold">Đơn hàng đã được thanh toán & xác nhận giữ chỗ thành công!</div>
+            <div class="small">Vé điện tử và hợp đồng bảo hiểm du lịch đã sẵn sàng.</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-success fw-bold rounded-pill" onclick="displayETicket(getLocalBookings().find(x => x.bookingId === '${b.bookingId}'))">
+          <i class="bi bi-receipt"></i> Xem E-Ticket
+        </button>
+      </div>
+    ` : ''}
+
+    ${isCancelled ? `
+      <div class="alert alert-secondary d-flex align-items-center gap-3 rounded-3 mb-4">
+        <i class="bi bi-x-circle-fill fs-3 text-danger"></i>
+        <div>
+          <div class="fw-bold text-dark">Đơn hàng này đã bị hủy</div>
+          <div class="small text-muted">Lý do hủy: <strong>${b.cancelReason || 'Người dùng yêu cầu hủy'}</strong></div>
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- 2 Cột: Thông tin khách hàng & Bảng kê chi phí -->
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="p-3 bg-white rounded-3 border h-100">
+          <h6 class="fw-bold text-uppercase small text-muted border-bottom pb-2 mb-3">Thông Tin Người Đặt Chỗ</h6>
+          <div class="d-flex flex-column gap-2 small">
+            <div><span class="text-muted">Họ và tên:</span> <strong>${b.customer?.fullName || 'Khách hàng'}</strong></div>
+            <div><span class="text-muted">Số điện thoại:</span> <strong>${b.customer?.phone || '-'}</strong></div>
+            <div><span class="text-muted">Email nhận vé:</span> <strong>${b.customer?.email || '-'}</strong></div>
+            <div><span class="text-muted">CCCD / Hộ chiếu:</span> <strong>${b.customer?.cccd || 'Đã xác thực'}</strong></div>
+            <div><span class="text-muted">Ghi chú đặc biệt:</span> <p class="p-2 bg-light rounded border text-muted mb-0 mt-1">${b.customer?.notes || 'Không có yêu cầu'}</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="p-3 bg-white rounded-3 border h-100">
+          <h6 class="fw-bold text-uppercase small text-muted border-bottom pb-2 mb-3">Chi Tiết Hành Trình & Chi Phí</h6>
+          <div class="d-flex flex-column gap-2 small">
+            <div><span class="text-muted">Hành trình tour:</span> <strong>${b.tourTitle}</strong></div>
+            <div><span class="text-muted">Ngày khởi hành:</span> <strong class="text-primary">${b.departureDate}</strong></div>
+            <div><span class="text-muted">Số lượng khách:</span> <strong>${b.passengers?.adults || 1} Người lớn${b.passengers?.children ? `, ${b.passengers.children} Trẻ em` : ''}</strong></div>
+            <div><span class="text-muted">Hình thức:</span> <strong>${b.paymentMethod || 'VietQR'}</strong></div>
+
+            <div class="p-2.5 bg-light rounded-3 border mt-2">
+              <div class="d-flex justify-content-between mb-1">
+                <span>Tạm tính giá tour:</span>
+                <strong>${formatVND(b.pricing?.subtotal || b.pricing?.total || 0)}</strong>
+              </div>
+              ${b.pricing?.discount ? `
+                <div class="d-flex justify-content-between mb-1 text-success">
+                  <span>Ưu đãi Voucher:</span>
+                  <strong>- ${formatVND(b.pricing.discount)}</strong>
+                </div>
+              ` : ''}
+              <div class="d-flex justify-content-between border-top pt-2 mt-2 fs-6">
+                <span class="fw-bold">Tổng thanh toán:</span>
+                <strong class="text-danger fw-bold">${formatVND(b.pricing?.total || 0)}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Kích hoạt đồng hồ đếm ngược 15 phút nếu đơn đang PENDING_PAYMENT
+  if (isPending) {
+    let timeLeft = 15 * 60; // 15 phút
+    activeCountdownTimer = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(activeCountdownTimer);
+        const timerEl = document.getElementById("bookingDetailTimer");
+        if (timerEl) timerEl.textContent = "00:00 (Hết hạn)";
+        return;
+      }
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      const timerEl = document.getElementById("bookingDetailTimer");
+      if (timerEl) {
+        timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+  }
+
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("customerBookingDetailModal"));
+  modal.show();
+}
+
+function selectDetailPaymentOption(provider, cardEl) {
+  const cards = document.querySelectorAll(".payment-option-card");
+  cards.forEach(c => c.classList.remove("selected"));
+  if (cardEl) {
+    cardEl.classList.add("selected");
+    const radio = cardEl.querySelector("input[type='radio']");
+    if (radio) radio.checked = true;
+  }
+
+  const qrBox = document.getElementById("detailVietQrBox");
+  if (qrBox) {
+    qrBox.style.display = (provider === "QR") ? "block" : "none";
   }
 }
 
 /**
- * Hủy đặt lịch du lịch
+ * Xử lý Khách Hàng Thanh Toán Ngay từ màn hình chi tiết
  */
-function cancelBooking(bookingId) {
-  if (!confirm(`Bạn có chắc chắn muốn hủy đơn đặt chỗ ${bookingId} không?`)) {
+function handleCustomerPayNow(bookingId) {
+  const bookings = getLocalBookings();
+  const idx = bookings.findIndex(x => x.bookingId === bookingId);
+  if (idx === -1) return;
+
+  const selectedRadio = document.querySelector("input[name='detailPayMethod']:checked");
+  const method = selectedRadio ? selectedRadio.value : "QR";
+
+  if (method === "CASH") {
+    bookings[idx].statusCode = "AWAITING_CASH";
+    bookings[idx].status = "CHỜ THU TIỀN MẶT";
+    bookings[idx].paymentMethod = "Tiền mặt tại quầy giao dịch";
+    bookings[idx].isPaid = false;
+    showToast("Đã ghi nhận thanh toán tiền mặt. Vui lòng thanh toán trong 24h!", "info");
+  } else {
+    bookings[idx].statusCode = "PAID";
+    bookings[idx].status = "ĐÃ THANH TOÁN";
+    bookings[idx].isPaid = true;
+    bookings[idx].paymentMethod = (method === "QR") ? "Chuyển khoản VietQR" : (method === "VNPAY") ? "Cổng VNPay" : "Ví điện tử MoMo";
+    showToast("Thanh toán thành công! Chuyến đi của bạn đã được xác nhận.", "success");
+  }
+
+  if (typeof saveBookingsData === "function") {
+    saveBookingsData(bookings);
+  } else {
+    localStorage.setItem("delta_bookings_v2", JSON.stringify(bookings));
+  }
+
+  // Cập nhật payment trong delta_payments_v2
+  try {
+    const payments = (typeof getPaymentsData === "function") ? getPaymentsData() : [];
+    const pIdx = payments.findIndex(p => p.bookingId === bookingId);
+    if (pIdx !== -1) {
+      payments[pIdx].status = bookings[idx].isPaid ? "SUCCEEDED" : "INITIATED";
+      payments[pIdx].provider = method;
+      if (typeof savePaymentsData === "function") savePaymentsData(payments);
+    }
+  } catch (e) {}
+
+  // Ghi nhật ký kiểm toán
+  try {
+    if (typeof addAuditLog === "function") {
+      addAuditLog("PAY_BOOKING", "Payment", bookingId, `Khách hàng ${bookings[idx].customer.fullName} thanh toán đơn ${bookingId} qua cổng ${method}`);
+    }
+  } catch (e) {}
+
+  updateCustomerBookingCounters();
+  openCustomerBookingDetail(bookingId);
+}
+
+/**
+ * Mở modal Hủy Đơn của khách hàng (Ported 100% từ deltatravel-main)
+ */
+function openCustomerCancelModal(bookingId) {
+  const bookings = getLocalBookings();
+  const b = bookings.find(x => x.bookingId === bookingId);
+  if (!b) return;
+
+  document.getElementById("customerCancelTargetId").value = bookingId;
+  document.getElementById("customerCancelBookingId").textContent = bookingId;
+  document.getElementById("customerCancelTourTitle").textContent = b.tourTitle;
+  document.getElementById("customerCancelReasonInput").value = "";
+
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("customerCancelBookingModal"));
+  modal.show();
+}
+
+function setCustomerCancelReason(txt) {
+  const input = document.getElementById("customerCancelReasonInput");
+  if (input) input.value = txt;
+}
+
+/**
+ * Xác nhận Hủy Đơn từ phía khách hàng
+ */
+function handleCustomerConfirmCancel(e) {
+  e.preventDefault();
+  const bookingId = document.getElementById("customerCancelTargetId").value;
+  const reason = document.getElementById("customerCancelReasonInput").value.trim();
+
+  if (!reason) {
+    alert("Vui lòng nhập lý do hủy đơn!");
     return;
   }
 
-  let bookings = getLocalBookings();
-  const order = bookings.find(b => b.bookingId === bookingId);
-  if (order) {
-    order.status = "ĐÃ HỦY THEO YÊU CẦU";
-    order.isPaid = false;
-    localStorage.setItem("delta_bookings", JSON.stringify(bookings));
-    renderMyBookingsList();
-    showToast(`Đã hủy thành công đơn ${bookingId}`, "warning");
+  const bookings = getLocalBookings();
+  const idx = bookings.findIndex(x => x.bookingId === bookingId);
+  if (idx === -1) return;
+
+  const wasPaid = bookings[idx].isPaid;
+
+  bookings[idx].statusCode = "CANCELLED";
+  bookings[idx].status = "ĐÃ HỦY THEO YÊU CẦU";
+  bookings[idx].cancelReason = reason;
+
+  if (typeof saveBookingsData === "function") {
+    saveBookingsData(bookings);
+  } else {
+    localStorage.setItem("delta_bookings_v2", JSON.stringify(bookings));
+  }
+
+  // Hoàn trả chỗ vào kho tour
+  try {
+    const tours = (typeof getToursData === "function") ? getToursData() : [];
+    const tIdx = tours.findIndex(t => t.id === bookings[idx].tourId);
+    if (tIdx !== -1) {
+      tours[tIdx].availableSeats = (tours[tIdx].availableSeats || 20) + (bookings[idx].passengers?.adults || 1);
+      if (typeof saveToursData === "function") saveToursData(tours);
+    }
+  } catch (e) {}
+
+  // Nếu đơn đã thanh toán thì chuyển payment sang REFUND_REQUIRED
+  if (wasPaid) {
+    try {
+      const payments = (typeof getPaymentsData === "function") ? getPaymentsData() : [];
+      const pIdx = payments.findIndex(p => p.bookingId === bookingId);
+      if (pIdx !== -1) {
+        payments[pIdx].status = "REFUND_REQUIRED";
+        payments[pIdx].note = `Khách hủy đơn: ${reason}. Cần đối soát hoàn tiền.`;
+        if (typeof savePaymentsData === "function") savePaymentsData(payments);
+      }
+    } catch (e) {}
+  }
+
+  // Ghi nhật ký kiểm toán
+  try {
+    if (typeof addAuditLog === "function") {
+      addAuditLog("CANCEL_BOOKING", "Booking", bookingId, `Khách hàng ${bookings[idx].customer.fullName} tự thao tác hủy đơn ${bookingId}. Lý do: ${reason}`);
+    }
+  } catch (e) {}
+
+  bootstrap.Modal.getInstance(document.getElementById("customerCancelBookingModal"))?.hide();
+  updateCustomerBookingCounters();
+  renderCustomerOrdersList(currentCustomerBookingSearch, currentCustomerBookingFilter);
+  showToast(`Đã hủy thành công đơn ${bookingId} theo yêu cầu!`, "warning");
+}
+
+function printETicketFromDetail() {
+  const code = document.getElementById("cDetailBookingCode")?.textContent;
+  const bookings = getLocalBookings();
+  const b = bookings.find(x => x.bookingId === code);
+  if (b) {
+    displayETicket(b);
   }
 }
 

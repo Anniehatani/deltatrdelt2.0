@@ -13,19 +13,71 @@
 // I. KHỞI TẠO DỮ LIỆU & STORAGE
 // =============================================================================
 const AUTH_STORAGE_KEYS = {
-  USERS: "delta_users",
-  CURRENT_USER: "delta_current_user"
+  USERS: "delta_users_v2",
+  CURRENT_USER: "delta_current_user_v2"
 };
 
-// Dữ liệu tài khoản mẫu mặc định để người dùng có thể thử đăng nhập ngay
+// Danh sách tài khoản của 5 thành viên nhóm phát triển Delta Travel
 const DEFAULT_DEMO_USERS = [
   {
-    id: "USR-1001",
+    id: "USR-01",
+    fullName: "Hồng Thắm",
+    email: "hongtham@deltatravel.vn",
+    phone: "0901112233",
+    password: "password123",
+    role: "ADMIN",
+    title: "Trưởng nhóm",
+    createdAt: "01/10/2026"
+  },
+  {
+    id: "USR-02",
     fullName: "Lê Văn An",
     email: "an.levan@gmail.com",
     phone: "0987654321",
     password: "password123",
+    role: "ADMIN",
+    title: "Thành viên nhóm",
     createdAt: "15/10/2026"
+  },
+  {
+    id: "USR-03",
+    fullName: "Lê Hải Đăng",
+    email: "haidang@deltatravel.vn",
+    phone: "0902223344",
+    password: "password123",
+    role: "ADMIN",
+    title: "Thành viên nhóm",
+    createdAt: "01/10/2026"
+  },
+  {
+    id: "USR-04",
+    fullName: "Nguyễn Phúc",
+    email: "nguyenphuc@deltatravel.vn",
+    phone: "0903334455",
+    password: "password123",
+    role: "ADMIN",
+    title: "Thành viên nhóm",
+    createdAt: "01/10/2026"
+  },
+  {
+    id: "USR-05",
+    fullName: "Mạnh Lê",
+    email: "manhle@deltatravel.vn",
+    phone: "0905556677",
+    password: "password123",
+    role: "ADMIN",
+    title: "Thành viên nhóm",
+    createdAt: "01/10/2026"
+  },
+  {
+    id: "USR-ADMIN",
+    fullName: "Ban Quản Trị Nhóm",
+    email: "admin@deltatravel.vn",
+    phone: "0900009999",
+    password: "admin123456",
+    role: "ADMIN",
+    title: "Nhóm Dự Án",
+    createdAt: "01/10/2026"
   }
 ];
 
@@ -35,11 +87,24 @@ const DEFAULT_DEMO_USERS = [
 function getAllUsers() {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEYS.USERS);
-    if (!raw) {
-      localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify(DEFAULT_DEMO_USERS));
-      return [...DEFAULT_DEMO_USERS];
+    let users = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(users) || users.length === 0) {
+      users = [...DEFAULT_DEMO_USERS];
+      localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify(users));
+      return users;
     }
-    return JSON.parse(raw) || [];
+    let changed = false;
+    DEFAULT_DEMO_USERS.forEach(demo => {
+      const idx = users.findIndex(u => u.email === demo.email);
+      if (idx === -1) {
+        users.push(demo);
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify(users));
+    }
+    return users;
   } catch (e) {
     console.error("Lỗi đọc danh sách users:", e);
     return [...DEFAULT_DEMO_USERS];
@@ -103,59 +168,39 @@ function renderAuthHeader() {
       ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
       : names[0].substring(0, 2).toUpperCase();
 
-    const shortName = names[names.length - 1] || user.fullName;
-
     const htmlContent = `
-      <div class="dropdown user-account-dropdown">
-        <button class="btn btn-auth-user dropdown-toggle" type="button" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false">
-          <div class="user-avatar-circle">${initials}</div>
-          <span class="user-display-name text-truncate">Xin chào, ${shortName}</span>
+      <div class="d-inline-flex align-items-center gap-1.5">
+        <!-- Liquid Glass User Profile Pill -->
+        <button type="button" class="liquid-user-glass" onclick="openUserProfileModal()" title="Hồ sơ tài khoản & Đơn đặt">
+          <div class="user-avatar-gold-rim">${initials}</div>
+          <span class="liquid-user-name">${user.fullName}</span>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end auth-dropdown-menu shadow-lg" aria-labelledby="userMenuBtn">
-          <li class="auth-dropdown-header">
-            <div class="user-name text-truncate">${user.fullName}</div>
-            <div class="text-muted small text-truncate mb-1">${user.email}</div>
-            <span class="user-badge"><i class="bi bi-patch-check-fill me-1"></i> Thành viên Delta VIP</span>
-          </li>
-          <li><hr class="dropdown-divider my-2"></li>
-          <li>
-            <a class="dropdown-item" href="javascript:void(0)" onclick="openUserProfileModal()">
-              <i class="bi bi-person-circle text-primary"></i> Thông tin tài khoản
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="javascript:void(0)" onclick="openMyBookingsModal()">
-              <i class="bi bi-ticket-perforated-fill text-info"></i> Lịch sử đặt tour của tôi
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="javascript:void(0)" onclick="openWishlistModal()">
-              <i class="bi bi-heart-fill text-danger"></i> Tour yêu thích
-            </a>
-          </li>
-          <li><hr class="dropdown-divider my-2"></li>
-          <li>
-            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="handleUserLogout()">
-              <i class="bi bi-box-arrow-right"></i> Đăng xuất
-            </a>
-          </li>
-        </ul>
+
+        <!-- Logout Button in Matching Glass Pill -->
+        <button type="button" class="liquid-logout-btn" onclick="handleUserLogout()" title="Đăng xuất tài khoản">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
       </div>
     `;
 
     if (container) container.innerHTML = htmlContent;
     if (topbarContainer) {
       topbarContainer.innerHTML = `
-        <span class="text-light small me-2"><i class="bi bi-person-check text-success"></i> ${user.fullName}</span>
-        <a href="javascript:void(0)" onclick="handleUserLogout()" class="text-warning small text-decoration-none">Thoát</a>
+        <span class="text-light small me-2"><i class="bi bi-person-check text-warning"></i> ${user.fullName}</span>
+        <a href="javascript:void(0)" onclick="handleUserLogout()" class="text-warning small text-decoration-none">Đăng xuất</a>
       `;
     }
   } else {
-    // Trạng thái chưa đăng nhập
+    // Trạng thái chưa đăng nhập: 2 nút kính chuẩn Apple Liquid Glass
     const htmlBtn = `
-      <button class="btn btn-outline-delta-auth" onclick="openAuthModal('login')">
-        <i class="bi bi-person-circle"></i> Đăng nhập / Đăng ký
-      </button>
+      <div class="d-inline-flex align-items-center gap-1.5">
+        <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 px-sm-3 py-1.5 fw-bold" style="font-size: 12px; background: rgba(255,255,255,0.7); backdrop-filter: blur(12px);" onclick="openAuthModal('login')">
+          Đăng nhập
+        </button>
+        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3 py-1.5 fw-bold text-white shadow-sm d-none d-sm-inline-block" style="font-size: 12px;" onclick="openAuthModal('register')">
+          Đăng ký
+        </button>
+      </div>
     `;
 
     if (container) container.innerHTML = htmlBtn;
@@ -349,6 +394,8 @@ function handleRegisterSubmit(e) {
     email: email,
     phone: phone,
     password: password,
+    role: "CUSTOMER",
+    title: "Thành viên mới",
     createdAt: new Date().toLocaleDateString("vi-VN")
   };
 
@@ -512,7 +559,7 @@ function openUserProfileModal() {
 
   // Đếm số lượng đơn hàng của user này trong delta_bookings
   try {
-    const bookings = JSON.parse(localStorage.getItem("delta_bookings")) || [];
+    const bookings = JSON.parse(localStorage.getItem("delta_bookings_v2")) || [];
     const userBookings = bookings.filter(b => 
       b.customer?.email?.toLowerCase() === user.email.toLowerCase() ||
       b.customer?.phone === user.phone ||
@@ -668,4 +715,15 @@ function hookBookingModalForAutoFill() {
       }
     });
   }
+}
+
+
+/**
+ * Điền nhanh thông tin tài khoản thành viên nhóm vào Form đăng nhập
+ */
+function fillQuickLogin(email, password) {
+  const accountInput = document.getElementById("loginAccount");
+  const passInput = document.getElementById("loginPassword");
+  if (accountInput) accountInput.value = email;
+  if (passInput) passInput.value = password;
 }
